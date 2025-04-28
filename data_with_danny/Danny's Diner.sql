@@ -1,4 +1,8 @@
-/* --------------------
+/* 
+Challenge can be found here: https://8weeksqlchallenge.com/case-study-1/
+This was completed using PostgreSQL
+
+   --------------------
    Case Study Questions
    --------------------*/
 
