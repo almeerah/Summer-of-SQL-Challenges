@@ -14,6 +14,7 @@ What was the total volume of pizzas ordered for each hour of the day?
 What was the volume of orders for each day of the week?
 */
 
+-- SECTION A --
 
 -- How many pizzas were ordered
 SELECT COUNT(order_id) from customer_orders;
@@ -89,3 +90,24 @@ FROM customer_orders AS c
 INNER JOIN runner_orders AS r ON r.order_id = c.order_id 
 WHERE pickup_time IS NOT NULL
 GROUP BY c.customer_id;
+
+-- How many pizzas were delivered that had both exclusions and extras?
+SELECT
+COUNT(c.order_id)
+FROM customer_orders c
+JOIN runner_orders r ON r.order_id = c.order_id 
+WHERE pickup_time <>'null'
+AND ((exclusions IS NOT NULL AND exclusions<>'null' AND LENGTH(exclusions)>0) 
+        AND (extras IS NOT NULL AND extras<>'null' AND LENGTH(extras)>0));
+        
+  -- What was the total volume of pizzas ordered for each hour of the day?
+SELECT EXTRACT(HOUR FROM order_time) AS hour,
+COUNT(order_id)
+FROM customer_orders
+GROUP BY hour;
+
+-- What was the volume of orders for each day of the week?
+SELECT TO_CHAR(order_time, 'Day') AS weekday,
+COUNT(order_id)
+FROM customer_orders
+GROUP BY weekday;
