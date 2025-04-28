@@ -25,3 +25,22 @@ SELECT COUNT (DISTINCT order_id) from customer_orders;
 SELECT COUNT (DISTINCT order_id)
 FROM runner_orders
 WHERE cancellation NOT LIKE '%Cancellation';
+
+-- How many of each type of pizza was delivered?
+SELECT
+pizza_name,
+COUNT (c.order_id) as delivered_pizzas
+FROM customer_orders c
+JOIN runner_orders r ON c.order_id = r.order_id
+JOIN pizza_names p ON c.pizza_id = p.pizza_id
+WHERE pickup_time <>'null'
+GROUP BY p.pizza_name;
+
+-- How many Vegetarian and Meatlovers were ordered by each customer?
+SELECT
+c.customer_id,
+p.pizza_name,
+COUNT (c.order_id) as num_pizzas
+FROM customer_orders c
+JOIN pizza_names p ON c.pizza_id = p.pizza_id
+GROUP BY p.pizza_name, c.customer_id;
