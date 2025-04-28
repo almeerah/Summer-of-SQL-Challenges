@@ -25,6 +25,3 @@ SELECT COUNT (DISTINCT order_id) from customer_orders;
 SELECT COUNT (DISTINCT order_id)
 FROM runner_orders
 WHERE cancellation NOT LIKE '%Cancellation';
-
--- How many of each type of pizza was delivered?
-SELECT
