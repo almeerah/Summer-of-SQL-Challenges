@@ -45,3 +45,19 @@ FROM customer_orders c
 JOIN pizza_names p ON c.pizza_id = p.pizza_id
 GROUP BY p.pizza_name, c.customer_id
 ORDER BY c.customer_id;
+
+-- What was the maximum number of pizzas delivered in a single order?
+SELECT 
+  ro.order_id, 
+  COUNT(co.order_id) as delivered_pizzas 
+FROM 
+  customer_orders as co 
+  INNER JOIN pizza_names as pn on co.pizza_id = pn.pizza_id 
+  INNER JOIN runner_orders as ro on ro.order_id = co.order_id 
+WHERE 
+  pickup_time<>'null'
+GROUP BY 
+  ro.order_id 
+ORDER BY 
+  COUNT(co.order_id) DESC 
+LIMIT 1;
