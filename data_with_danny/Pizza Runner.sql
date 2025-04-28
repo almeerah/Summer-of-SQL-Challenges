@@ -61,3 +61,31 @@ GROUP BY
 ORDER BY 
   COUNT(co.order_id) DESC 
 LIMIT 1;
+
+-- For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
+SELECT 
+  c.customer_id, 
+
+  SUM(CASE 
+    WHEN 
+        (
+          (exclusions IS NOT NULL AND exclusions<>'null' AND LENGTH(exclusions)>0) 
+        AND (extras IS NOT NULL AND extras<>'null' AND LENGTH(extras)>0)
+        )=TRUE
+    THEN 1 
+    ELSE 0
+  END) as changes, 
+  SUM(CASE 
+    WHEN 
+        (
+          (exclusions IS NOT NULL AND exclusions<>'null' AND LENGTH(exclusions)>0) 
+        AND (extras IS NOT NULL AND extras<>'null' AND LENGTH(extras)>0)
+        )=TRUE
+    THEN 0 
+    ELSE 1
+  END) as no_changes 
+
+FROM customer_orders AS c
+INNER JOIN runner_orders AS r ON r.order_id = c.order_id 
+WHERE pickup_time IS NOT NULL
+GROUP BY c.customer_id;
