@@ -43,4 +43,5 @@ p.pizza_name,
 COUNT (c.order_id) as num_pizzas
 FROM customer_orders c
 JOIN pizza_names p ON c.pizza_id = p.pizza_id
-GROUP BY p.pizza_name, c.customer_id;
+GROUP BY p.pizza_name, c.customer_id
+ORDER BY c.customer_id;
