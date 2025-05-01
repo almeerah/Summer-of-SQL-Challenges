@@ -171,3 +171,10 @@ FROM runner_orders r
 WHERE distance <> 'null' AND
 duration <> 'null'
 GROUP BY runner_id, order_id;
+
+-- What is the successful delivery percentage for each runner?
+SELECT runner_id,
+(COUNT(CASE WHEN duration <> 'null'
+     THEN 1 END)::decimal / COUNT(order_id)) * 100 AS successful_orders
+FROM runner_orders
+GROUP BY runner_id;
