@@ -122,3 +122,52 @@ FROM runner_orders r
 JOIN customer_orders c ON r.order_id = c.order_id
 WHERE r.pickup_time <> 'null'
 GROUP BY r.runner_id;
+
+-- Is there any relationship between the number of pizzas and how long the order takes to prepare?
+WITH pizzas_and_time AS
+(
+SELECT c.order_id,
+COUNT(pizza_id) as num_pizzas,
+r.pickup_time::timestamp - c.order_time::timestamp as prep_time
+FROM runner_orders r
+JOIN customer_orders c ON r.order_id = c.order_id
+WHERE r.pickup_time <> 'null'
+GROUP BY c.order_id, prep_time
+  )
+  
+  SELECT
+  num_pizzas,
+  AVG(prep_time) as avg_prep_time
+  FROM pizzas_and_time
+  GROUP BY num_pizzas
+  ORDER BY num_pizzas;
+
+-- What was the average distance travelled for each customer?
+SELECT
+c.customer_id,
+AVG(REPLACE(distance, 'km', ''):: numeric(3, 1)) AS avg_distance
+FROM customer_orders c
+JOIN runner_orders r ON c.order_id = r.order_id
+WHERE distance <> 'null'
+GROUP BY c.customer_id;
+
+-- What was the difference between the longest and shortest delivery times for all orders?
+SELECT 
+  MAX(REGEXP_REPLACE(duration, '\D', '', 'g')::int) - 
+  MIN(REGEXP_REPLACE(duration, '\D', '', 'g')::int) AS delivery_time_difference 
+FROM 
+  runner_orders 
+WHERE 
+  duration <> 'null';
+
+-- What was the average speed for each runner for each delivery and do you notice any trend for these values?
+SELECT runner_id, order_id,
+AVG(
+(REGEXP_REPLACE(distance, '[^0-9.]', '', 'g')::float)
+/
+(ROUND(REGEXP_REPLACE(duration, '[^0-9]', '', 'g')::numeric / 60, 2))
+)AS speed_kmh
+FROM runner_orders r
+WHERE distance <> 'null' AND
+duration <> 'null'
+GROUP BY runner_id, order_id;
