@@ -100,3 +100,25 @@ SELECT TO_CHAR(order_time, 'Day') AS weekday,
 COUNT(order_id)
 FROM customer_orders
 GROUP BY weekday;
+
+
+
+
+-- SECTION B --
+
+-- How many runners signed up for each 1 week period? (i.e. week starts 2021-01-01)
+SELECT
+  DATE '2021-01-01' + ((registration_date - DATE '2021-01-01') / 7) * 7 AS week_start,
+  COUNT(runner_id) AS runners_signed_up
+FROM runners
+GROUP BY week_start
+ORDER BY week_start;
+
+-- What was the average time in minutes it took for each runner to arrive at the Pizza Runner HQ to pickup the order?
+SELECT
+r.runner_id,
+AVG(r.pickup_time::timestamp - c.order_time::timestamp)
+FROM runner_orders r
+JOIN customer_orders c ON r.order_id = c.order_id
+WHERE r.pickup_time <> 'null'
+GROUP BY r.runner_id;
