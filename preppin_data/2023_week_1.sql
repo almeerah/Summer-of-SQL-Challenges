@@ -1,9 +1,3 @@
-SELECT *
-FROM pd2023_wk01
-LIMIT 100;
-
--- Select "Run" above to load this challenge.
-
 /*
 REQUIREMENTS
 
@@ -22,6 +16,8 @@ Output each query
 
 Challenge source: 
 https://preppindata.blogspot.com/2023/01/2023-week-1-data-source-bank.html
+
+This challenge was completed using PostgreSQL
 */
 
 
