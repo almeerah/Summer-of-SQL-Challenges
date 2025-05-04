@@ -183,7 +183,29 @@ GROUP BY runner_id;
 
 -- Section C ---
 
-SELECT pizza_id
-  FROM pizza_recipes pr
-  LEFT JOIN LATERAL SPLIT_TO_TABLE(toppings,', ') as S
-  INNER JOIN pizza_toppings as T ON T.topping_id=S.value;
+-- What are the standard ingredients for each pizza?
+SELECT pr.pizza_id,
+T.topping_name
+FROM pizza_recipes pr
+JOIN LATERAL unnest(string_to_array(pr.toppings, ', ')) AS topping
+  ON TRUE
+JOIN pizza_toppings T
+  ON T.topping_id = topping::INTEGER;
+
+-- What was the most commonly added extra?
+WITH ordered_extras AS (
+  SELECT 
+    t.topping_name,
+    count(extras_split) AS count_extras
+  FROM customer_orders c
+  JOIN LATERAL unnest(string_to_array(c.extras, ', ')) AS extras_split
+    ON TRUE
+  JOIN pizza_toppings t
+    ON t.topping_id = extras_split::INT
+  WHERE c.extras IS NOT NULL AND c.extras <> 'null'
+  GROUP BY t.topping_name
+  ORDER BY count_extras DESC
+)
+SELECT topping_name
+FROM ordered_extras
+LIMIT 1;
