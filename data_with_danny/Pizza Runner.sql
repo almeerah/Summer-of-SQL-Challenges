@@ -209,3 +209,21 @@ WITH ordered_extras AS (
 SELECT topping_name
 FROM ordered_extras
 LIMIT 1;
+
+-- What was the most common exclusion?
+WITH ordered_exc AS (
+  SELECT 
+    t.topping_name,
+    count(exc_split) AS count_exc
+  FROM customer_orders c
+  JOIN LATERAL unnest(string_to_array(c.exclusions, ', ')) AS exc_split
+    ON TRUE
+  JOIN pizza_toppings t
+    ON t.topping_id = exc_split::INT
+  WHERE c.exclusions IS NOT NULL AND c.exclusions <> 'null'
+  GROUP BY t.topping_name
+  ORDER BY count_exc DESC
+)
+SELECT topping_name
+FROM ordered_exc
+LIMIT 1;
