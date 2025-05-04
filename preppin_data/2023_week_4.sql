@@ -1,5 +1,3 @@
--- Select "Run" above to load this challenge.
-
 /*
 REQUIREMENTS
 
@@ -17,6 +15,8 @@ Output the data
 
 Challenge source: 
 https://preppindata.blogspot.com/2023/01/2023-week-4-new-customers.html
+
+This challenge was completed using PostgreSQL
 */
 
 WITH unioned_table AS (
