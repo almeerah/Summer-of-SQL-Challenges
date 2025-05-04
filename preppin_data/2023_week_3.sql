@@ -1,5 +1,3 @@
--- Select "Run" above to load this challenge.
-
 /*
 REQUIREMENTS
 
@@ -25,6 +23,8 @@ Output the data
 
 Challenge source: 
 https://preppindata.blogspot.com/2023/01/2023-week-3-targets-for-dsb.html
+
+This challenge was completed using PostgreSQL
 */
 
 SELECT
