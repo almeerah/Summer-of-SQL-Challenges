@@ -1,14 +1,3 @@
-SELECT *
-FROM pd2023_wk02_swift_codes
-LIMIT 100;
-
-SELECT *
-FROM pd2023_wk02_transactions
-LIMIT 100;
-
-
--- Select "Run" above to load this challenge.
-
 /*
 IBAN Code Order:
 - Country Code
@@ -30,6 +19,8 @@ REQUIREMENTS
 
 Challenge source: 
 https://preppindata.blogspot.com/2023/01/2023-week-2-international-bank-account.html
+
+This challenge was completed using PostgreSQL
 */
 
 WITH IBAN_components as (
