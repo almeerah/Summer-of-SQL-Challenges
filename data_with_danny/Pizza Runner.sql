@@ -178,3 +178,12 @@ SELECT runner_id,
      THEN 1 END)::decimal / COUNT(order_id)) * 100 AS successful_orders
 FROM runner_orders
 GROUP BY runner_id;
+
+
+
+-- Section C ---
+
+SELECT pizza_id
+  FROM pizza_recipes pr
+  LEFT JOIN LATERAL SPLIT_TO_TABLE(toppings,', ') as S
+  INNER JOIN pizza_toppings as T ON T.topping_id=S.value;
