@@ -227,3 +227,41 @@ WITH ordered_exc AS (
 SELECT topping_name
 FROM ordered_exc
 LIMIT 1;
+
+/* Generate an order item for each record in the customers_orders table in the format of one of the following:
+Meat Lovers
+Meat Lovers - Exclude Beef
+Meat Lovers - Extra Bacon
+Meat Lovers - Exclude Cheese, Bacon - Extra Mushroom, Peppers */
+WITH ordered_exc AS (
+  SELECT 
+    c.order_id,
+    c.pizza_id,
+    ' - Exclude ' || string_agg(DISTINCT t.topping_name, ', ') AS toppings
+  FROM customer_orders c
+  JOIN LATERAL unnest(string_to_array(c.exclusions, ', ')) AS exc(topping_id) ON TRUE
+  LEFT JOIN pizza_toppings t ON t.topping_id = exc.topping_id::int
+  WHERE c.exclusions IS NOT NULL AND c.exclusions <> 'null'
+  GROUP BY c.order_id, c.pizza_id
+),
+ordered_extras AS (
+  SELECT 
+    c.order_id,
+    c.pizza_id,
+    ' - Extra ' || string_agg(DISTINCT t.topping_name, ', ') AS toppings
+  FROM customer_orders c
+  JOIN LATERAL unnest(string_to_array(c.extras, ', ')) AS ext(topping_id) ON TRUE
+  LEFT JOIN pizza_toppings t ON t.topping_id = ext.topping_id::int
+  WHERE c.extras IS NOT NULL AND c.extras <> 'null'
+  GROUP BY c.order_id, c.pizza_id
+)
+SELECT 
+  c.order_id,
+  pn.pizza_name
+    || COALESCE(extr.toppings, '')
+    || COALESCE(exc.toppings, '') AS full_order
+FROM customer_orders c
+JOIN pizza_names pn ON c.pizza_id = pn.pizza_id
+LEFT JOIN ordered_exc exc ON c.order_id = exc.order_id AND c.pizza_id = exc.pizza_id
+LEFT JOIN ordered_extras extr ON c.order_id = extr.order_id AND c.pizza_id = extr.pizza_id
+ORDER BY c.order_id;
