@@ -353,3 +353,89 @@ END, ', ') as ingred
 FROM ingredient_totals
 GROUP BY order_id,pizza_name
 ;
+
+-- What is the total quantity of each ingredient used in all delivered pizzas sorted by most frequent first?
+
+WITH ordered_exclusions AS(
+     SELECT 
+    c.order_id,
+    c.pizza_id,
+    t.topping_id
+  
+  FROM customer_orders c
+  JOIN LATERAL unnest(string_to_array(c.exclusions, ', ')) AS exc(topping_id) ON TRUE
+  LEFT JOIN pizza_toppings t ON t.topping_id = exc.topping_id::int
+  WHERE c.exclusions IS NOT NULL AND c.exclusions <> 'null'
+  ),
+ordered_extras AS(
+     SELECT 
+    c.order_id,
+    c.pizza_id,
+    t.topping_id,
+  	t.topping_name
+  
+  FROM customer_orders c
+  JOIN LATERAL unnest(string_to_array(c.extras, ', ')) AS exc(topping_id) ON TRUE
+  LEFT JOIN pizza_toppings t ON t.topping_id = exc.topping_id::int
+  WHERE c.extras IS NOT NULL AND c.extras <> 'null'
+  ),
+  orders AS (
+  SELECT DISTINCT
+        c.order_id,
+        c.pizza_id,
+        TRIM(s.value)::int AS topping_id,
+        t.topping_name
+    FROM customer_orders c
+    INNER JOIN pizza_recipes pr ON c.pizza_id = pr.pizza_id
+    LEFT JOIN LATERAL unnest(string_to_array(pr.toppings, ', ')) AS s(value) ON TRUE
+    LEFT JOIN pizza_toppings t ON t.topping_id = s.value::int
+    LEFT JOIN ordered_exclusions exc ON c.order_id = exc.order_id AND c.pizza_id = exc.pizza_id AND TRIM(s.value)::int = exc.topping_ID
+    WHERE exc.topping_id IS NULL
+  ),
+  
+  orders_extras_and_exclusions AS (
+  
+  SELECT 
+	order_id,
+        pizza_id,
+        topping_id,
+        topping_name
+ FROM orders
+ 
+ UNION ALL
+ 
+ SELECT
+ order_id,
+        pizza_id,
+        topping_id,
+        topping_name
+ FROM ordered_extras
+  )
+  ,
+  
+  ingredient_totals AS (
+
+SELECT
+o.order_id,
+  pn.pizza_name,
+  topping_name,
+COUNT(topping_id) as n
+FROM orders_extras_and_exclusions o
+INNER JOIN pizza_names pn on pn.pizza_id = o.pizza_id
+    INNER JOIN runner_orders run on o.order_id = run.order_id
+    WHERE run.duration IS NOT NULL
+GROUP BY o.order_id,
+  pn.pizza_name,
+  topping_name
+ORDER BY o.order_id,
+  pn.pizza_name,
+  topping_name
+  )
+  
+  SELECT
+topping_name,
+SUM(n)
+FROM ingredient_totals
+GROUP BY topping_name
+ORDER BY SUM(n) DESC
+;
