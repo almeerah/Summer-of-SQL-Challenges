@@ -265,3 +265,91 @@ JOIN pizza_names pn ON c.pizza_id = pn.pizza_id
 LEFT JOIN ordered_exc exc ON c.order_id = exc.order_id AND c.pizza_id = exc.pizza_id
 LEFT JOIN ordered_extras extr ON c.order_id = extr.order_id AND c.pizza_id = extr.pizza_id
 ORDER BY c.order_id;
+
+/*Generate an alphabetically ordered comma separated ingredient list for each pizza order from the customer_orders table and add a 2x in front of any relevant ingredients
+For example: "Meat Lovers: 2xBacon, Beef, ... , Salami"*/
+
+WITH ordered_exclusions AS(
+     SELECT 
+    c.order_id,
+    c.pizza_id,
+    t.topping_id
+  
+  FROM customer_orders c
+  JOIN LATERAL unnest(string_to_array(c.exclusions, ', ')) AS exc(topping_id) ON TRUE
+  LEFT JOIN pizza_toppings t ON t.topping_id = exc.topping_id::int
+  WHERE c.exclusions IS NOT NULL AND c.exclusions <> 'null'
+  ),
+ordered_extras AS(
+     SELECT 
+    c.order_id,
+    c.pizza_id,
+    t.topping_id,
+  	t.topping_name
+  
+  FROM customer_orders c
+  JOIN LATERAL unnest(string_to_array(c.extras, ', ')) AS exc(topping_id) ON TRUE
+  LEFT JOIN pizza_toppings t ON t.topping_id = exc.topping_id::int
+  WHERE c.extras IS NOT NULL AND c.extras <> 'null'
+  ),
+  orders AS (
+  SELECT DISTINCT
+        c.order_id,
+        c.pizza_id,
+        TRIM(s.value)::int AS topping_id,
+        t.topping_name
+    FROM customer_orders c
+    INNER JOIN pizza_recipes pr ON c.pizza_id = pr.pizza_id
+    LEFT JOIN LATERAL unnest(string_to_array(pr.toppings, ', ')) AS s(value) ON TRUE
+    LEFT JOIN pizza_toppings t ON t.topping_id = s.value::int
+    LEFT JOIN ordered_exclusions exc ON c.order_id = exc.order_id AND c.pizza_id = exc.pizza_id AND TRIM(s.value)::int = exc.topping_ID
+    WHERE exc.topping_id IS NULL
+  ),
+  
+  orders_extras_and_exclusions AS (
+  
+  SELECT 
+	order_id,
+        pizza_id,
+        topping_id,
+        topping_name
+ FROM orders
+ 
+ UNION ALL
+ 
+ SELECT
+ order_id,
+        pizza_id,
+        topping_id,
+        topping_name
+ FROM ordered_extras
+  )
+  ,
+  
+  ingredient_totals AS (
+
+SELECT
+order_id,
+  pn.pizza_name,
+  topping_name,
+COUNT(topping_id) as n
+FROM orders_extras_and_exclusions o
+INNER JOIN pizza_names pn on pn.pizza_id = o.pizza_id
+GROUP BY order_id,
+  pn.pizza_name,
+  topping_name
+ORDER BY order_id,
+  pn.pizza_name,
+  topping_name
+  )
+  
+  SELECT
+order_id,
+  pizza_name || ': ' || STRING_AGG( DISTINCT CASE WHEN n>1
+THEN n || 'x' || topping_name
+ELSE topping_name
+END, ', ') as ingred
+
+FROM ingredient_totals
+GROUP BY order_id,pizza_name
+;
